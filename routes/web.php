@@ -1,7 +1,7 @@
 <?php
-
+use App\Http\Controllers\LogoController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [LogoController::class, 'showForm']);
+
+
