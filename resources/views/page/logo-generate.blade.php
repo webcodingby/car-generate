@@ -82,6 +82,7 @@
         })
             .then(response => response.json())
             .then(data => {
+                console.log(data)
                 // Отображение сгенерированных изображений
                 document.getElementById('generatedLogos').style.display = 'block';
                 document.getElementById('logo').innerHTML = `<h3>Логотип:</h3><div>${data.logo}</div>`;
