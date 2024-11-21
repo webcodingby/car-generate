@@ -5,18 +5,30 @@ namespace App\Actions;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Imagick;
+use JetBrains\PhpStorm\NoReturn;
 
 class SvgAction
 {
+    /**
+     * @throws \Exception
+     */
     public function generate(array $data): array
     {
-        $iconPath = $this->getIconPath($data['icon']);
+        try {
+            $iconPath = $this->getIconPath($data['icon']);
+        } catch (\Exception $e) {
+            throw new \Exception($data['icon'] . ' не найден: ' . $e->getMessage());
+        }
         $fontPath = storage_path('app/public/' . $data['font']);
         $color1 = $data['color1'];
         $color2 = $data['color2'] ?? null
         $logoSvg = $this->createSvg($iconPath, $fontPath, $data['name'], $color1, $color2);
         $logoFooterSvg = $this->createSvg($iconPath, $fontPath, $data['name'], $color1, $color2, true);
-        $favicon = $this->createFavicon($logoSvg, Str::slug($data['name']));
+        try {
+            $favicon = $this->createFavicon($logoSvg, Str::slug($data['name']));
+        } catch (\ImagickException $e) {
+            throw new \Exception($logoSvg . ' не найден: ' . $e->getMessage());
+        }
 
         return [
             'logo' => $logoSvg,
@@ -41,15 +53,20 @@ class SvgAction
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getIconPath(?string $icon): string
     {
         if (!$icon) {
-            $iconFiles = Storage::disk('public')->files('icons/auto');
-            if (count($iconFiles) > 0) {
-                return storage_path('app/public/' . $iconFiles[array_rand($iconFiles)]);
+            try {
+                $iconFiles = Storage::disk('public')->files('icons/auto');
+                if (count($iconFiles) > 0) {
+                    return storage_path('app/public/' . $iconFiles[array_rand($iconFiles)]);
+                }
+            } catch (\Exception $e) {
+                throw new \Exception( 'Ошибка: ' . $e->getMessage());
             }
-
-            throw new \Exception("No icons available in the directory");
         }
 
         return storage_path('app/public/' . $icon);
@@ -65,7 +82,11 @@ class SvgAction
         bool $isFooter = false
     ): string
     {
-        $svgContent = $this->readSvgFile($iconPath);
+        try {
+            $svgContent = $this->readSvgFile($iconPath);
+        } catch (\Exception $e) {
+            throw new \Exception('Ошибка: ' . $e->getMessage());
+        }
         $svgInnerContent = $this->extractSvgContent($svgContent);
 
         if ($isFooter) {
@@ -82,12 +103,18 @@ class SvgAction
         return $this->generateSvg($gradient, $gradientId, $svgInnerContent, $textContent);
     }
 
+    /**
+     * @throws \Exception
+     */
     private function readSvgFile(string $iconPath): string
     {
-        $content = file_get_contents($iconPath);
-        if ($content === false) {
-            throw new \Exception("Не удалось прочитать SVG файл: {$iconPath}");
+
+        try {
+            $content = file_get_contents($iconPath);
+        } catch (\Exception $e) {
+            throw new \Exception( 'Ошибка: ' . $e->getMessage());
         }
+
         return mb_convert_encoding($content, 'UTF-8', 'auto');
     }
 
@@ -125,15 +152,15 @@ class SvgAction
     {
         $name = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $words = explode(' ', $name);
-        $lineHeight = 12;
         $fontSize = 20;
-        $yOffset = 70;
 
-        $textLines = array_map(function ($word, $index) use ($yOffset, $lineHeight) {
+        $textLines = array_map(function ($word, $index)) {
+            $lineHeight = 12;
+            $yOffset = 70;
             $y = $yOffset + $index * $lineHeight;
             return <<<LINE
-            <tspan x="50%" y="{$y}" text-anchor="middle" alignment-baseline="middle">{$word}</tspan>
-        LINE;
+<tspan x="50%" y="{$y}" text-anchor="middle" alignment-baseline="middle">{$word}</tspan>
+LINE;
         }, $words, array_keys($words));
 
         $textStyle = "font-family: '{$fontPath}'; font-size: {$fontSize}px;";
@@ -160,13 +187,11 @@ class SvgAction
     SVG;
     }
 
+    /**
+     * @throws \ImagickException
+     */
     private function createFavicon(string $svgCode, string $folderName): string
     {
-        dd($svgCode);
-        if (empty($svgCode)) {
-            throw new \Exception('SVG код пуст');
-        }
-
         $svgFilePath = storage_path("app/public/site-logos/{$folderName}.svg");
         file_put_contents($svgFilePath, $svgCode);
 
