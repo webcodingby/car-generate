@@ -152,15 +152,15 @@ class SvgAction
     {
         $name = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $words = explode(' ', $name);
+        $lineHeight = 12;
         $fontSize = 20;
+        $yOffset = 70;
 
-        $textLines = array_map(function ($word, $index)) {
-            $lineHeight = 12;
-            $yOffset = 70;
+        $textLines = array_map(function ($word, $index) use ($yOffset, $lineHeight) {
             $y = $yOffset + $index * $lineHeight;
             return <<<LINE
-<tspan x="50%" y="{$y}" text-anchor="middle" alignment-baseline="middle">{$word}</tspan>
-LINE;
+            <tspan x="50%" y="{$y}" text-anchor="middle" alignment-baseline="middle">{$word}</tspan>
+        LINE;
         }, $words, array_keys($words));
 
         $textStyle = "font-family: '{$fontPath}'; font-size: {$fontSize}px;";
