@@ -11,7 +11,7 @@ class LogoGenerateResource extends JsonResource
         return [
             'logo' => $this->resource['logo'],
             'logo_footer' => $this->resource['logo_footer'],
-            'favicon' => base64_encode($this->resource['favicon']),
+            'favicon' => $this->resource['favicon'],
         ];
     }
 }

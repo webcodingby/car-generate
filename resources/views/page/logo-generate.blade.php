@@ -45,13 +45,7 @@
         <label for="color2">Цвет 2 (опционально):</label>
         <input type="color" id="color2" name="color2">
     </div>
-
-    <!-- Скрытое поле для определения действия -->
-    <input type="hidden" id="actionType" name="actionType" value="generate">
-
-    <!-- Кнопки -->
     <button type="button" id="generateButton">Сгенерировать</button>
-    <button type="submit" id="saveButton">Сохранить</button>
 </form>
 <!-- Блок для отображения сгенерированных изображений -->
 <div id="generatedLogos" class="mt-4" style="display: none;">
@@ -73,7 +67,6 @@
     document.getElementById('color1').value = '';
     document.getElementById('color2').value = '';
     document.getElementById('generateButton').addEventListener('click', function () {
-        document.getElementById('actionType').value = 'generate';
         // Отправка формы с помощью AJAX
         const formData = new FormData(document.getElementById('logoForm'));
         fetch('/api/logo-save', {
@@ -90,10 +83,5 @@
                 document.getElementById('faviconContainer').innerHTML = `<h3>Фавикон:</h3><img src='data:image/x-icon;base64,${btoa(data.favicon)}' alt='Favicon' width='16' height='16'>`;
             })
             .catch(error => console.error('Ошибка:', error));
-    });
-
-
-    document.getElementById('saveButton').addEventListener('click', function () {
-        document.getElementById('actionType').value = 'save';
     });
 </script>

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LogoGenerateRequest;
 use App\Http\Resources\LogoGenerateResource;
-use App\Services\SvgAction;
+use App\Actions\SvgAction;
 use Illuminate\Http\JsonResponse;
 
 class ApiLogoGeneratorController extends Controller
@@ -22,17 +22,18 @@ class ApiLogoGeneratorController extends Controller
         $generatedFiles = $this->svgAction->generate($request->validated());
 
         return response()->json(
-            new LogoGenerateResource($generatedFiles),
-            200,
-            [],
-            JSON_UNESCAPED_UNICODE
+            ['message' => 'Иконки успешно сгенерированы!',
+            new LogoGenerateResource($generatedFiles)],
+            200, [], JSON_UNESCAPED_UNICODE
         );
     }
 
     public function save(LogoGenerateRequest $request): JsonResponse
     {
-        $this->svgAction->save($request->validated());
-
-        return response()->json(['message' => 'Иконки успешно сохранены!'], 200, [], JSON_UNESCAPED_UNICODE);
+        $generatedFiles = $this->svgAction->save($request->validated());
+        return response()->json([
+            'message' => 'Иконки успешно сохранены!',
+            new LogoGenerateResource($generatedFiles)
+            ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }
