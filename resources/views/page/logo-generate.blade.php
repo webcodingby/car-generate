@@ -62,6 +62,9 @@
     input[name="icon"]:checked + .icon-preview {
         border-color: #007bff;
     }
+    .logo__footer{
+        background: #000;
+    }
 </style>
 <script>
     document.getElementById('color1').value = '';
@@ -79,7 +82,7 @@
                 // Отображение сгенерированных изображений
                 document.getElementById('generatedLogos').style.display = 'block';
                 document.getElementById('logo').innerHTML = `<h3>Логотип:</h3><div>${data.data.logo}</div>`;
-                document.getElementById('logoFooter').innerHTML = `<h3>Инвертированный логотип:</h3><div>${data.logo_footer}</div>`;
+                document.getElementById('logoFooter').innerHTML = `<h3>Инвертированный логотип:</h3><div class="logo__footer">${data.data.logo_footer}</div>`;
                 document.getElementById('faviconContainer').innerHTML = `<h3>Фавикон:</h3><img src='${data.data.favicon}' alt='Favicon' width='16' height='16'>`;
             })
             .catch(error => console.error('Ошибка:', error));

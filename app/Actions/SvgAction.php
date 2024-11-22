@@ -155,9 +155,9 @@ GRADIENT;
     {
         $name = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $words = explode(' ', $name);
-        $lineHeight = 12;
+        $lineHeight = 14;
         $fontSize = 20;
-        $yOffset = 70;
+        $yOffset = 75;
 
         $textLines = array_map(function ($word, $index) use ($yOffset, $lineHeight) {
             $y = $yOffset + $index * $lineHeight;
@@ -182,7 +182,7 @@ LINE;
 <?xml version="1.0" encoding="UTF-8"?>
     <svg fill="url(#{$gradientId})" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
         {$gradient}
-        <g transform="translate(0, 0) scale(1.5)">
+        <g transform="translate(10, 5) scale(1.4)">
             {$svgInnerContent}
         </g>
         {$textContent}
