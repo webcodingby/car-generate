@@ -20,12 +20,10 @@ class ApiLogoGeneratorController extends Controller
     public function generate(LogoGenerateRequest $request): JsonResponse
     {
         $generatedFiles = $this->svgAction->generate($request->validated());
-
-        return response()->json(
-            ['message' => 'Иконки успешно сгенерированы!',
-            new LogoGenerateResource($generatedFiles)],
-            200, [], JSON_UNESCAPED_UNICODE
-        );
+        return response()->json([
+            'message' => 'Иконки успешно сгенерированы!',
+            'data' => $generatedFiles,
+            ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 
     public function save(LogoGenerateRequest $request): JsonResponse
@@ -33,7 +31,7 @@ class ApiLogoGeneratorController extends Controller
         $generatedFiles = $this->svgAction->save($request->validated());
         return response()->json([
             'message' => 'Иконки успешно сохранены!',
-            new LogoGenerateResource($generatedFiles)
+            'data' => $generatedFiles,
             ], 200, [], JSON_UNESCAPED_UNICODE);
     }
 }
