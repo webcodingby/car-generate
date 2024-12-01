@@ -9,87 +9,123 @@ use Spatie\Image\Image;
 
 class SvgAction
 {
-    /**
-     * @throws \Exception
-     */
     public function generate(array $data, string $path): array
     {
-        try {
-            $iconPath = $this->getIconPath($data['icon']);
-        } catch (\Exception $e) {
-            throw new \Exception($data['icon'] . ' не найден: ' . $e->getMessage());
-        }
+        $iconPath = $this->getIconPath($data['icon']);
         $fontPath = storage_path('app/public/' . $data['font']);
         $color1 = $data['color1'];
         $color2 = $data['color2'] ?? null;
-        $logoSvg = $this->createSvg($iconPath, $fontPath, $data['name'], $color1, $color2);
-        $logoFooterSvg = $this->createSvg($iconPath, $fontPath, $data['name'], $color1, $color2, true);
-        try {
-            $favicon = $this->createFavicon($logoSvg, Str::slug($data['name']));
-        } catch (\ImagickException $e) {
-            throw new \Exception($logoSvg . ' не найден: ' . $e->getMessage());
+        $name = $data['name'];
+        $nameParts = explode(' ', $name);
+        $nameLength = strlen(str_replace(' ', '', $name));
+        $hasTwoUppercase = preg_match('/[A-Z].*[A-Z]/', $name);
+        $isSingleWord = count($nameParts) === 1;
+        $hasEightChars = $isSingleWord && $nameLength === 8;
+
+        //$optionsArray = $this->optionsTextAndLogoData($hasTwoUppercase);
+        // Настройка текста и макета
+        if ($hasTwoUppercase) {
+            $gradient = false;
+            $textColor1 = $color1;
+            $textColor2 = $color2;
+            $iconColor = $this->pickRandomColor($color1, $color2);
+        } else {
+            $gradient = true;
+            $textColor1 = $textColor2 = null;
+            $iconColor = null;
         }
-        $logoPath = $path . '/logo.svg';
-        $logoFooterPath = $path . '/logo_footer.svg';
-        file_put_contents($logoPath, $logoSvg);
-        file_put_contents($logoFooterPath, $logoFooterSvg);
+
+        if ($hasEightChars) {
+            $fontSize = 24 - max(0, ($nameLength - 8) * 1.5);
+            $layout = 'under';
+            $iconTransform = 'translate(0, 0) scale(1.5)';
+        } elseif (count($nameParts) >= 3) {
+            $fontSize = max(16, 32 - (strlen($name) * 0.7));
+            $layout = 'side';
+            $iconTransform = 'translate(10, 25) scale(0.8)';
+        } else {
+            $fontSize = max(16, 32 - (strlen($name) * 0.5));
+            $layout = 'default';
+            $iconTransform = 'translate(10, 10) scale(1.0)';
+        }
+
+        // Создание SVG логотипов
+        $logoSvg = $this->createSvg($iconPath, $fontPath, $name, $color1, $color2, false, [
+            'layout' => $layout,
+            'fontSize' => $fontSize,
+            'gradient' => $gradient,
+            'textColor1' => $textColor1,
+            'textColor2' => $textColor2,
+            'iconTransform' => $iconTransform,
+            'iconColor' => $iconColor
+        ]);
+
+        $logoFooterSvg = $this->createSvg($iconPath, $fontPath, $name, $color1, $color2, true, [
+            'layout' => $layout,
+            'fontSize' => $fontSize,
+            'gradient' => $gradient,
+            'textColor1' => $textColor1,
+            'textColor2' => $textColor2,
+            'iconTransform' => $iconTransform,
+            'iconColor' => $iconColor
+        ]);
+
+        $logoPath = "/storage/" . $path . '/logo.svg';
+        $logoFooterPath = "/storage/" . $path . '/logo_footer.svg';
+
+        $logoFullPath = storage_path("app/public/") . $path . '/logo.svg';
+        $logoFullFooterPath = storage_path("app/public/") . $path . '/logo_footer.svg';
+        file_put_contents($logoFullPath, $logoSvg);
+        file_put_contents($logoFullFooterPath, $logoFooterSvg);
+
+        // Создание фавиконов
+        //$faviconColored = $this->createFavicon($logoSvg, Str::slug($name), $color1);
+        $faviconColored = "/storage/" . $this->createFavicon($iconPath, Str::slug($name), $color1, $color2);
+
+
 
         return [
-            'logo' => $logoSvg,
-            'logo_footer' => $logoFooterSvg,
-            'favicon' => $favicon,
+            'logo' => $logoPath,
+            'logo_footer' => $logoFooterPath,
+            'favicon_colored' => $faviconColored
         ];
     }
 
     public function save(array $data): array
     {
         $folderName = Str::slug($data['name']);
-        $destinationPath = storage_path("app/public/site-logos/$folderName");
-        if (!file_exists($destinationPath)) {
-            mkdir($destinationPath, 0755, true);
-        }
+        $destinationPath = "site-logos/$folderName";
+
+        Storage::disk('public')->makeDirectory($destinationPath);
+
         $generatedFiles = $this->generate($data, $destinationPath);
-        foreach ($generatedFiles as $key => $fileContent) {
-            $fileName = ($key === 'favicon') ? 'favicon.ico' : "$key.svg";
-            file_put_contents("$destinationPath/$fileName", $fileContent);
-        }
+
         return $generatedFiles;
     }
 
-    /**
-     * @throws \Exception
-     */
     private function getIconPath(?string $icon): string
     {
         if (!$icon) {
-            try {
-                $iconFiles = Storage::disk('public')->files('icons/auto');
-                if (count($iconFiles) > 0) {
-                    return storage_path('app/public/' . $iconFiles[array_rand($iconFiles)]);
-                }
-            } catch (\Exception $e) {
-                throw new \Exception('Ошибка: ' . $e->getMessage());
+            $iconFiles = Storage::disk('public')->files('icons/auto');
+            if (empty($iconFiles)) {
+                throw new \Exception('Иконки отсутствуют в папке icons/auto');
             }
+            return public_path('/storage/' . $iconFiles[array_rand($iconFiles)]);
         }
 
-        return storage_path('app/public/' . $icon);
+        return $icon;
     }
 
-    private function createSvg
-    (
+    private function createSvg(
         string $iconPath,
         string $fontPath,
         string $name,
         string $color1,
         string $color2,
-        bool   $isFooter = false
-    ): string
-    {
-        try {
-            $svgContent = $this->readSvgFile($iconPath);
-        } catch (\Exception $e) {
-            throw new \Exception('Ошибка: ' . $e->getMessage());
-        }
+        bool $isFooter,
+        array $options
+    ): string {
+        $svgContent = $this->readSvgFile($iconPath);
         $svgInnerContent = $this->extractSvgContent($svgContent);
 
         if ($isFooter) {
@@ -99,26 +135,50 @@ class SvgAction
         $gradientId = $this->generateGradientId();
         $gradient = $this->createGradient($gradientId, $color1, $color2);
 
-        $svgInnerContent = $this->removeFillAttributes($svgInnerContent);
+        $textContent = $this->prepareTextContent($name, $fontPath, $options['fontSize'], $options['layout']);
 
-        $textContent = $this->prepareTextContent($name, $fontPath);
-
-        return $this->generateSvg($gradient, $gradientId, $svgInnerContent, $textContent);
+        return <<<SVG
+<?xml version="1.0" encoding="UTF-8"?>
+<svg fill="url(#{$gradientId})" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+    {$gradient}
+    <g transform="{$options['iconTransform']}">
+        {$svgInnerContent}
+    </g>
+    {$textContent}
+</svg>
+SVG;
     }
 
-    /**
-     * @throws \Exception
-     */
+    private function createFavicon(string $icon, string $folderName, string $color, string $color2): string
+    {
+        $faviconPath = "site-logos/{$folderName}/favicon.ico";
+        $tempPngPath = storage_path("app/public/site-logos/{$folderName}/favicon.png");
+                
+        Image::load($icon)
+            ->width(16)
+            ->height(16)
+            ->save($tempPngPath);
+
+        $image = new Imagick();
+        $image->readImage($tempPngPath);
+        $image->setImageFormat('ico');
+        $image->writeImage(storage_path("app/public/$faviconPath"));
+
+        unlink($tempPngPath);
+
+        return $faviconPath;
+    }
+
     private function readSvgFile(string $iconPath): string
     {
-
         try {
             $content = file_get_contents($iconPath);
+            return mb_convert_encoding($content, 'UTF-8', 'auto');
         } catch (\Exception $e) {
-            throw new \Exception('Ошибка: ' . $e->getMessage());
+            $iconNewPath = public_path('/storage/' . $iconPath);
+            $content = file_get_contents($iconNewPath);
+            return mb_convert_encoding($content, 'UTF-8', 'auto');
         }
-
-        return mb_convert_encoding($content, 'UTF-8', 'auto');
     }
 
     private function extractSvgContent(string $svgContent): string
@@ -151,13 +211,16 @@ GRADIENT;
         return preg_replace('/<path[^>]*fill=["\'][^"\']*["\'][^>]*>/i', '<path$1>', $svgContent);
     }
 
-    private function prepareTextContent(string $name, string $fontPath): string
-    {
+    private function prepareTextContent(
+        string $name,
+        string $fontPath,
+        int $fontSize,
+        string $layout
+    ): string {
         $name = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $words = explode(' ', $name);
-        $lineHeight = 14;
-        $fontSize = 20;
-        $yOffset = 75;
+        $lineHeight = $layout === 'under' ? 20 : 14;
+        $yOffset = $layout === 'under' ? 75 : 50;
 
         $textLines = array_map(function ($word, $index) use ($yOffset, $lineHeight) {
             $y = $yOffset + $index * $lineHeight;
@@ -170,49 +233,9 @@ LINE;
         return sprintf('<style>#text { %s }</style><text id="text">%s</text>', $textStyle, implode("\n", $textLines));
     }
 
-    private function generateSvg
-    (
-        string $gradient,
-        string $gradientId,
-        string $svgInnerContent,
-        string $textContent
-    ): string
+    private function pickRandomColor(string $color1, string $color2): string
     {
-        return <<<SVG
-<?xml version="1.0" encoding="UTF-8"?>
-    <svg fill="url(#{$gradientId})" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
-        {$gradient}
-        <g transform="translate(10, 5) scale(1.4)">
-            {$svgInnerContent}
-        </g>
-        {$textContent}
-    </svg>
-SVG;
+        return rand(0, 1) ? $color1 : $color2;
     }
 
-    private function createFavicon(string $svgCode, string $folderName): string
-    {
-        $svgFilePath = storage_path("app/public/site-logos/{$folderName}/logo-favicon.svg");
-        $faviconPath = storage_path("app/public/site-logos/{$folderName}/favicon.ico");
-
-        // Сохранение SVG
-        file_put_contents($svgFilePath, $svgCode);
-
-        // Конвертация SVG в PNG с использованием Spatie Image
-        $tempPngPath = storage_path("app/public/site-logos/{$folderName}/favicon.png");
-        Image::load($svgFilePath)
-            ->width(16)
-            ->height(16)
-            ->save($tempPngPath);
-
-        // Конвертация PNG в ICO
-        $image = new Imagick();
-        $image->readImage($tempPngPath);
-        $image->setImageFormat('ico');
-        $image->writeImage($faviconPath);
-
-        unlink($tempPngPath); // Удалить временный PNG
-
-        return $faviconPath;
-    }
 }

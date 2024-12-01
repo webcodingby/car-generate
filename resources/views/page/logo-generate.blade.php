@@ -81,16 +81,27 @@
                 method: 'POST',
                 body: formData,
             })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Ответ сервера:', response);
+                    return response.json();
+                })
                 .then(data => {
-                    console.log(data.data);
-                    // Отображение сгенерированных изображений
-                    document.getElementById('generatedLogos').style.display = 'block';
-                    document.getElementById('logo').innerHTML = `<h3>Логотип:</h3><div>${data.data.logo}</div>`;
-                    document.getElementById('logoFooter').innerHTML = `<h3>Инвертированный логотип:</h3><div class="logo__footer">${data.data.logo_footer}</div>`;
-                    document.getElementById('faviconContainer').innerHTML = `<h3>Фавикон:</h3><img src='${data.data.favicon}' alt='Favicon' width='16' height='16'>`;
+                    if (data && data.data) {
+                        console.log('Данные успешно получены:', data.data);
+                        renderLogoBloks(data.data);
+                    } else {
+                        console.error('Некорректный формат данных:', data);
+                    }
                 })
                 .catch(error => console.error('Ошибка:', error));
         });
+        function renderLogoBloks(data) {
+            const timestamp = new Date().getTime();
+            document.getElementById('generatedLogos').style.display = 'block';
+            document.getElementById('logo').innerHTML = `<h3>Логотип:</h3><div><img src='${data.logo}?t=${timestamp}' alt='Logo'></div>`;
+            document.getElementById('logoFooter').innerHTML = `<h3>Инвертированный логотип:</h3><div class="logo__footer"><img src='${data.logo_footer}?t=${timestamp}' alt='Logo Footer'></div>`;
+            document.getElementById('faviconContainer').innerHTML = `<h3>Фавикон Цветной:</h3><img src='${data.favicon_colored}?t=${timestamp}' alt='Favicon' width='16' height='16'>`;
+        }
+
     </script>
 @endsection

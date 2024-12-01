@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-    <svg fill="url(#gradient-cijZ5)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+    <svg fill="url(#gradient-yf4hX)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
         <defs>
-    <linearGradient id="gradient-cijZ5" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" style="stop-color: #ff0000; stop-opacity: 1" />
+    <linearGradient id="gradient-yf4hX" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color: #000000; stop-opacity: 1" />
         <stop offset="100%" style="stop-color: #000000; stop-opacity: 1" />
     </linearGradient>
 </defs>
-        <g transform="translate(10, 5) scale(1.5)">
-
+        <g transform="translate(10, 5) scale(1.4)">
+            
 
 <style type="text/css">.st0{fill-rule:evenodd;clip-rule:evenodd;}</style>
 
@@ -19,5 +19,5 @@
 
 
         </g>
-        <style>#text { font-family: '/Users/wcby/Sites/Laravel/car-generate/storage/app/public/fonts/CactusClassicalSerif-Regular.ttf'; font-size: 20px; }</style><text id="text"><tspan x="50%" y="75" text-anchor="middle" alignment-baseline="middle">webcoding</tspan></text>
+        <style>#text { font-family: '/Users/wcby/Sites/Laravel/car-generate/storage/app/public/fonts/CactusClassicalSerif-Regular.ttf'; font-size: 20px; }</style><text id="text"><tspan x="50%" y="75" text-anchor="middle" alignment-baseline="middle">МогоКар</tspan></text>
     </svg>

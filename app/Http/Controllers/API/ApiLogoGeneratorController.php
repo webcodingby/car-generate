@@ -20,6 +20,7 @@ class ApiLogoGeneratorController extends Controller
     public function generate(LogoGenerateRequest $request): JsonResponse
     {
         $generatedFiles = $this->svgAction->generate($request->validated());
+        dd($generatedFiles);
         return response()->json([
             'message' => 'Иконки успешно сгенерированы!',
             'data' => $generatedFiles,

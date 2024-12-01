@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Intervention\Image;
 
 class AppServiceProvider extends ServiceProvider
 {
